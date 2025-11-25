@@ -105,14 +105,14 @@
   background: white;
 }
 
-/* Body Layout */
+/* Ensure proper alignment between facility column and grid */
 .scheduler-body {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
 }
 
-/* Facility Column */
 .facility-column {
   width: 250px;
   background: #f8f9fa;
@@ -120,6 +120,7 @@
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .facility-header {
@@ -132,11 +133,12 @@
   align-items: center;
 }
 
+/* Add smooth expand/collapse animation */
 .facility-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
-
 .facility-item {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #dee2e6;
@@ -145,7 +147,10 @@
   gap: 0.5rem;
   cursor: pointer;
   transition: background 0.2s;
-  height: 48px;
+  min-height: 48px;
+  height: auto; /* Changed from fixed height */
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .facility-item:hover {
@@ -181,8 +186,9 @@
 
 .facility-name {
   flex: 1;
+  white-space: normal; /* Allow text wrapping */
+  line-height: 1.4;
 }
-
 /* Scheduler Grid */
 .scheduler-grid-wrapper {
   flex: 1;
@@ -280,16 +286,31 @@
   flex: 1;
 }
 
+/* Sync scrolling between facility list and grid rows */
+.facility-list,
+.facility-rows {
+  overflow-y: hidden; /* Prevent individual scrolling */
+}
+
+/* Add this for better visual alignment */
+.facility-item,
+.facility-row {
+  box-sizing: border-box;
+}
+
 .facility-row {
   display: flex;
-  height: 48px;
+  min-height: 48px;
+  height: auto; /* Changed from fixed height */
   border-bottom: 1px solid #dee2e6;
+  transition: height 0.2s ease-out; /* Smooth height transitions */
 }
 
 .day-cells {
   flex: 1;
   display: flex;
   border-right: 1px solid #dee2e6;
+  height: 100%; /* Fill parent height */
 }
 
 .day-cells:last-child {
@@ -300,6 +321,7 @@
   flex: 1;
   display: flex;
   border-right: 1px solid #e9ecef;
+  height: 100%; /* Fill parent height */
 }
 
 .hour-cells:last-child {
@@ -311,6 +333,7 @@
   cursor: pointer;
   transition: background 0.2s;
   position: relative;
+  height: 100%; /* Fill parent height */
 }
 
 .booking-cell:hover {
@@ -414,3 +437,5 @@
 .facility-list::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/*changed*/
