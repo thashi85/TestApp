@@ -19,7 +19,7 @@ const sampleFacilities: Facility[] = [
         isExpanded: true,
         children: [
           { id: "fac-1", name: "Basketball Court 1", type: "facility", parentId: "cat-1" },
-          { id: "fac-2", name: "Basketball Court 2", type: "facility", parentId: "cat-1" },
+          { id: "fac-2", name: "Basketball Court 2 asasas ewfrc weewf  werew", type: "facility", parentId: "cat-1" },
           { id: "fac-3", name: "Volleyball Court", type: "facility", parentId: "cat-1" },
         ],
       },

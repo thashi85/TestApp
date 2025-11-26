@@ -10,9 +10,10 @@ interface SchedulerGridProps {
   startDate: Date;
   facilities: Facility[];
   bookings: Booking[];
-  rowHeights: RowHeights;
+  //rowHeights: RowHeights;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
   onCellClick?: (facilityId: string, date: Date, hour: number, minute: number) => void;
+  onToggle: (facilityId: string) => void;
 }
 export const SchedulerGrid: React.FC<SchedulerGridProps> = ({
   view,
@@ -20,23 +21,29 @@ export const SchedulerGrid: React.FC<SchedulerGridProps> = ({
   startDate,
   facilities,
   bookings,
-  rowHeights,
+  //rowHeights,
   scrollRef,
   onCellClick,
+  onToggle,
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const dates = getDateRange(view, startDate);
   const flatFacilities = flattenFacilities(facilities);
   const subCellsPerHour = view === "day" ? 60 / timeInterval : 1;
 
+  console.log("Flat Facilities in SchedulerGrid:", flatFacilities);
   const renderTimeHeaders = () => {
-    return dates.map((date, dayIndex) => (
-      <div key={dayIndex} className="day-column">
-        <div className="day-header">
-          <div className="day-name">{date.toLocaleDateString("en-US", { weekday: "short" })}</div>
-          <div className="day-date">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
-        </div>
-        <div className="hours-container">
+    return (
+      <div className="flex flex-1">
+        <div style={{ width: "150px" }}></div>
+        <div className="flex flex-1">
+          {dates.map((date, dayIndex) => (
+            <div key={dayIndex} className="day-column">
+              <div className="day-header">
+                <div className="day-name">{date.toLocaleDateString("en-US", { weekday: "short" })}</div>
+                <div className="day-date">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+              </div>
+              {/*  <div className="hours-container">
           {Array.from({ length: 24 }, (_, hour) => (
             <div key={hour} className="hour-column">
               {view === "day" ? <div className="hour-header">{formatTime(hour)}</div> : null}
@@ -55,44 +62,85 @@ export const SchedulerGrid: React.FC<SchedulerGridProps> = ({
               </div>
             </div>
           ))}
+        </div> */}
+            </div>
+          ))}
         </div>
       </div>
-    ));
+    );
+  };
+
+  const FacilityItemRow: React.FC<{
+    facility: Facility;
+    onToggle: (id: string) => void;
+  }> = ({ facility, onToggle }) => {
+    const itemRef = useRef<HTMLDivElement>(null);
+    const hasChildren = facility.children && facility.children.length > 0;
+    const paddingLeft = (facility.level ?? 0) * 20;
+
+    return (
+      <>
+        <div
+          ref={itemRef}
+          className={`facility-item facility-${facility.type}`}
+          style={{ paddingLeft: `${paddingLeft}px` }}
+          data-facility-id={facility.id}
+        >
+          {hasChildren && (
+            <button
+              className="expand-button"
+              onClick={() => onToggle(facility.id)}
+              aria-label={facility.isExpanded ? "Collapse" : "Expand"}
+            >
+              {facility.isExpanded ? "▼" : "▶"}
+            </button>
+          )}
+          <span className="facility-name">{facility.name}</span>
+        </div>
+      </>
+    );
   };
 
   const renderFacilityRows = () => {
     return flatFacilities.map((facility) => {
-      const rowHeight = rowHeights[facility.id] || 48; // Default height if not measured yet
+      //  const rowHeight = rowHeights[facility.id] || 48; // Default height if not measured yet
 
       return (
         <div
           key={facility.id}
           className="facility-row"
           data-facility-id={facility.id}
-          style={{
-            height: `${rowHeight}px`,
-            minHeight: `${rowHeight}px`,
-            maxHeight: `${rowHeight}px`,
-          }}
+        /* style={{
+          height: `${rowHeight}px`,
+          minHeight: `${rowHeight}px`,
+          maxHeight: `${rowHeight}px`,
+        }} */
         >
-          {dates.map((date, dayIndex) => (
-            <div key={dayIndex} className="day-cells">
-              {Array.from({ length: 24 }, (_, hour) => (
-                <div key={hour} className="hour-cells">
-                  {Array.from({ length: subCellsPerHour }, (_, subIndex) => {
-                    const minute = view === "day" ? subIndex * timeInterval : 0;
-                    return (
-                      <div
-                        key={`${hour}-${subIndex}`}
-                        className={`booking-cell ${subIndex > 0 ? "dashed-border" : ""}`}
-                        onClick={() => onCellClick?.(facility.id, date, hour, minute)}
-                      />
-                    );
-                  })}
+          <div className="flex flex-1">
+            <div style={{ width: "150px", textWrap: "auto", borderRight: "1px solid #dee2e6" }}>
+              <FacilityItemRow key={facility.id} facility={facility} onToggle={onToggle} />
+            </div>
+            <div className="flex flex-1">
+              {dates.map((date, dayIndex) => (
+                <div key={dayIndex} className={`day-cells facility-${facility.type}`}>
+                  {Array.from({ length: 24 }, (_, hour) => (
+                    <div key={hour} className="hour-cells">
+                      {Array.from({ length: subCellsPerHour }, (_, subIndex) => {
+                        const minute = view === "day" ? subIndex * timeInterval : 0;
+                        return (
+                          <div
+                            key={`${hour}-${subIndex}`}
+                            className={`booking-cell ${subIndex > 0 ? "dashed-border" : ""}`}
+                            onClick={() => onCellClick?.(facility.id, date, hour, minute)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          ))}
+          </div>
         </div>
       );
     });
@@ -102,7 +150,7 @@ export const SchedulerGrid: React.FC<SchedulerGridProps> = ({
     <div className={`scheduler-grid view-${view}`}>
       <div className="time-headers">{renderTimeHeaders()}</div>
       <div className="facility-rows" ref={scrollRef}>
-        {renderFacilityRows()}
+        <div>{renderFacilityRows()}</div>
       </div>
     </div>
   );

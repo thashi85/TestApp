@@ -20,6 +20,16 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   startDate,
   onDateChange,
 }) => {
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const dateInputRef = React.useRef<HTMLInputElement>(null);
+
+  const getStartOfWeek = (date: Date) => {
+    const newDate = new Date(date);
+    const dayOfWeek = newDate.getDay();
+    newDate.setDate(newDate.getDate() - dayOfWeek);
+    return newDate;
+  };
+
   const navigateDate = (direction: "prev" | "next") => {
     const newDate = new Date(startDate);
     const delta = direction === "next" ? 1 : -1;
@@ -29,10 +39,17 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
         newDate.setDate(newDate.getDate() + delta);
         break;
       case "week":
+        // Move to next/previous week
         newDate.setDate(newDate.getDate() + delta * 7);
+        // Then set to the start of that week (Sunday)
+        const dayOfWeek = newDate.getDay();
+        newDate.setDate(newDate.getDate() - dayOfWeek);
         break;
       case "month":
+        // Move to next/previous month
         newDate.setMonth(newDate.getMonth() + delta);
+        // Then set to the 1st of that month
+        newDate.setDate(1);
         break;
     }
 
@@ -44,6 +61,18 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
       view === "month" ? { year: "numeric", month: "long" } : { year: "numeric", month: "short", day: "numeric" };
 
     return startDate.toLocaleDateString("en-US", options);
+  };
+
+  const handleDateSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = new Date(e.target.value);
+    onDateChange(selectedDate);
+    setShowDatePicker(false);
+  };
+
+  const handleCalendarClick = () => {
+    if (dateInputRef.current) {
+      dateInputRef.current.showPicker();
+    }
   };
 
   return (
@@ -63,6 +92,15 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
         <button onClick={() => onDateChange(new Date())} className="today-button">
           Today
         </button>
+        <button onClick={handleCalendarClick} className="calendar-button" title="Select date">
+          📅
+        </button>
+        <input
+          ref={dateInputRef}
+          type="date"
+          onChange={handleDateSelect}
+          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+        />
       </div>
 
       <div className="header-right">

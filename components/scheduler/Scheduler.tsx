@@ -35,9 +35,9 @@ export const Scheduler: React.FC<SchedulerProps> = ({ initialFacilities }) => {
 
   const handleToggleFacility = (facilityId: string) => {
     toggleFacility(facilityId);
-    setTimeout(() => {
+    /*  setTimeout(() => {
       updateRowHeights();
-    }, 50);
+    }, 50); */
   };
 
   return (
@@ -52,12 +52,12 @@ export const Scheduler: React.FC<SchedulerProps> = ({ initialFacilities }) => {
       />
 
       <div className="scheduler-body">
-        <FacilityColumn
+        {/*  <FacilityColumn
           facilities={facilities}
           onToggle={handleToggleFacility}
           registerRow={registerRow}
           scrollRef={facilityListRef}
-        />
+        /> */}
 
         <div className="scheduler-grid-wrapper">
           <SchedulerGrid
@@ -67,7 +67,8 @@ export const Scheduler: React.FC<SchedulerProps> = ({ initialFacilities }) => {
             facilities={facilities}
             bookings={bookings}
             onCellClick={handleCellClick}
-            rowHeights={rowHeights}
+            onToggle={handleToggleFacility}
+            //rowHeights={rowHeights}
             scrollRef={gridRowsRef}
           />
         </div>

@@ -9,6 +9,9 @@ export interface Facility {
     parentId?: string;
     children?: Facility[];
     isExpanded?: boolean;
+
+    //diaply purpose
+    level?: number;
 }
 
 export interface Booking {

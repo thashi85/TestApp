@@ -1,13 +1,19 @@
 import { ViewType, TimeInterval, Facility } from './types';
 
-export const getColumnsForView = (view: ViewType): number => {
+export const getColumnsForView = (view: ViewType, date?: Date): number => {
     switch (view) {
         case 'day':
             return 1;
         case 'week':
             return 7;
         case 'month':
-            return 30; // or dynamic based on month
+            if (date) {
+                // Get the actual number of days in the month (28/29/30/31)
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                return new Date(year, month + 1, 0).getDate();
+            }
+            return 30; // fallback
         default:
             return 1;
     }
@@ -27,14 +33,17 @@ export const getTotalSubCells = (view: ViewType, interval: TimeInterval): number
 export const flattenFacilities = (facilities: Facility[]): Facility[] => {
     const result: Facility[] = [];
 
-    const traverse = (facility: Facility) => {
+    const traverse = (facility: Facility, level: number) => {
+        facility.level = level;
+
         result.push(facility);
         if (facility.isExpanded && facility.children) {
-            facility.children.forEach(traverse);
+            facility.children.forEach(child => traverse(child, level + 1));
+
         }
     };
 
-    facilities.forEach(traverse);
+    facilities.forEach(child => traverse(child, 0));
     return result;
 };
 
@@ -58,12 +67,37 @@ export const toggleFacilityExpansion = (
 
 export const getDateRange = (view: ViewType, startDate: Date): Date[] => {
     const dates: Date[] = [];
-    const columns = getColumnsForView(view);
 
-    for (let i = 0; i < columns; i++) {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + i);
-        dates.push(date);
+    switch (view) {
+        case 'day':
+            dates.push(new Date(startDate));
+            break;
+        case 'week':
+            // For week view, generate 7 days starting from Sunday
+            const weekStart = new Date(startDate);
+            const dayOfWeek = weekStart.getDay();
+            weekStart.setDate(weekStart.getDate() - dayOfWeek);
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(weekStart);
+                date.setDate(date.getDate() + i);
+                dates.push(date);
+            }
+            break;
+        case 'month':
+            // For month view, generate all days in the month starting from the 1st
+            const monthStart = new Date(startDate);
+            monthStart.setDate(1);
+
+            // Calculate actual number of days in the month (28/29/30/31)
+            const daysInMonth = getColumnsForView(view, startDate);
+
+            for (let i = 0; i < daysInMonth; i++) {
+                const date = new Date(monthStart);
+                date.setDate(date.getDate() + i);
+                dates.push(date);
+            }
+            break;
     }
 
     return dates;

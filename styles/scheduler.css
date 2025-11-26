@@ -65,6 +65,24 @@
   background: #218838;
 }
 
+.calendar-button {
+  padding: 0.5rem 1rem;
+  background: #e0dfe2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-button:hover {
+  background: #5a32a3;
+}
+
 .header-right {
   display: flex;
   gap: 1rem;
@@ -139,6 +157,7 @@
   overflow-y: auto;
   overflow-x: hidden;
 }
+
 .facility-item {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #dee2e6;
@@ -148,7 +167,8 @@
   cursor: pointer;
   transition: background 0.2s;
   min-height: 48px;
-  height: auto; /* Changed from fixed height */
+  height: auto;
+  /* Changed from fixed height */
   word-wrap: break-word;
   word-break: break-word;
 }
@@ -186,9 +206,11 @@
 
 .facility-name {
   flex: 1;
-  white-space: normal; /* Allow text wrapping */
+  white-space: normal;
+  /* Allow text wrapping */
   line-height: 1.4;
 }
+
 /* Scheduler Grid */
 .scheduler-grid-wrapper {
   flex: 1;
@@ -289,7 +311,8 @@
 /* Sync scrolling between facility list and grid rows */
 .facility-list,
 .facility-rows {
-  overflow-y: hidden; /* Prevent individual scrolling */
+  overflow-y: hidden;
+  /* Prevent individual scrolling */
 }
 
 /* Add this for better visual alignment */
@@ -301,16 +324,19 @@
 .facility-row {
   display: flex;
   min-height: 48px;
-  height: auto; /* Changed from fixed height */
+  height: auto;
+  /* Changed from fixed height */
   border-bottom: 1px solid #dee2e6;
-  transition: height 0.2s ease-out; /* Smooth height transitions */
+  transition: height 0.2s ease-out;
+  /* Smooth height transitions */
 }
 
 .day-cells {
   flex: 1;
   display: flex;
   border-right: 1px solid #dee2e6;
-  height: 100%; /* Fill parent height */
+  height: 100%;
+  /* Fill parent height */
 }
 
 .day-cells:last-child {
@@ -321,7 +347,8 @@
   flex: 1;
   display: flex;
   border-right: 1px solid #e9ecef;
-  height: 100%; /* Fill parent height */
+  height: 100%;
+  /* Fill parent height */
 }
 
 .hour-cells:last-child {
@@ -333,7 +360,8 @@
   cursor: pointer;
   transition: background 0.2s;
   position: relative;
-  height: 100%; /* Fill parent height */
+  height: 100%;
+  /* Fill parent height */
 }
 
 .booking-cell:hover {
