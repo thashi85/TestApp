@@ -20,8 +20,39 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   startDate,
   onDateChange,
 }) => {
-  const [showDatePicker, setShowDatePicker] = React.useState(false);
-  const dateInputRef = React.useRef<HTMLInputElement>(null);
+  const [showCalendar, setShowCalendar] = React.useState(false);
+  const [calendarMonth, setCalendarMonth] = React.useState(new Date());
+  const [isSmallScreen, setIsSmallScreen] = React.useState(false);
+  const calendarRef = React.useRef<HTMLDivElement>(null);
+
+  // Close calendar when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+        setShowCalendar(false);
+      }
+    };
+
+    if (showCalendar) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCalendar]);
+
+  // Detect screen size for responsive design
+  React.useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 768); // md breakpoint
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const getStartOfWeek = (date: Date) => {
     const newDate = new Date(date);
@@ -63,16 +94,126 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
     return startDate.toLocaleDateString("en-US", options);
   };
 
-  const handleDateSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = new Date(e.target.value);
-    onDateChange(selectedDate);
-    setShowDatePicker(false);
+  const handleDateSelect = (date: Date) => {
+    onDateChange(date);
+    setShowCalendar(false);
   };
 
   const handleCalendarClick = () => {
-    if (dateInputRef.current) {
-      dateInputRef.current.showPicker();
+    setShowCalendar(!showCalendar);
+    setCalendarMonth(startDate);
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days: (Date | null)[] = [];
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
     }
+
+    // Add all days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+
+    return days;
+  };
+
+  const navigateCalendarMonth = (direction: "prev" | "next") => {
+    const newMonth = new Date(calendarMonth);
+    newMonth.setMonth(newMonth.getMonth() + (direction === "next" ? 1 : -1));
+    setCalendarMonth(newMonth);
+  };
+
+  // Render calendar popup with responsive design
+  const renderCalendar = () => {
+    if (!showCalendar) return null;
+
+    return (
+      <div className={`
+        absolute top-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50
+        ${isSmallScreen ? 'right-0 left-0 mx-2 w-auto' : 'right-0 w-80'}
+      `}>
+        {/* Calendar Header */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => navigateCalendarMonth("prev")}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h3 className={`font-semibold text-gray-800 ${isSmallScreen ? 'text-base' : 'text-lg'}`}>
+            {calendarMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          </h3>
+          <button
+            onClick={() => navigateCalendarMonth("next")}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Day Labels */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            <div key={day} className="text-center text-xs font-semibold text-gray-600 py-2">
+              {isSmallScreen ? day.charAt(0) : day}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar Days */}
+        <div className="grid grid-cols-7 gap-1">
+          {getDaysInMonth(calendarMonth).map((date, index) => {
+            if (!date) {
+              return <div key={`empty-${index}`} className="aspect-square" />;
+            }
+
+            const isToday =
+              date.getDate() === new Date().getDate() &&
+              date.getMonth() === new Date().getMonth() &&
+              date.getFullYear() === new Date().getFullYear();
+
+            const isSelected =
+              date.getDate() === startDate.getDate() &&
+              date.getMonth() === startDate.getMonth() &&
+              date.getFullYear() === startDate.getFullYear();
+
+            return (
+              <button
+                key={index}
+                onClick={() => handleDateSelect(date)}
+                className={`
+                  aspect-square flex items-center justify-center rounded-lg font-medium
+                  transition-all duration-200
+                  ${isSmallScreen ? 'text-xs' : 'text-sm'}
+                  ${isSelected
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : isToday
+                      ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }
+                `}
+              >
+                {date.getDate()}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -92,15 +233,14 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
         <button onClick={() => onDateChange(new Date())} className="today-button">
           Today
         </button>
-        <button onClick={handleCalendarClick} className="calendar-button" title="Select date">
-          📅
-        </button>
-        <input
-          ref={dateInputRef}
-          type="date"
-          onChange={handleDateSelect}
-          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
-        />
+
+        <div className="relative" ref={calendarRef}>
+          <button onClick={handleCalendarClick} className="calendar-button" title="Select date">
+            📅
+          </button>
+
+          {renderCalendar()}
+        </div>
       </div>
 
       <div className="header-right">
