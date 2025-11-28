@@ -466,4 +466,19 @@
   background: #555;
 }
 
-/*changed*/
+.day-cell.solid-border-left {
+  border-left: 1px solid #b2b5b5;
+}
+
+.solid-border-left {
+  border-left: 1px solid #c5cdcd;
+}
+
+.dashed-border-left {
+  border-left: 1px dashed #dee2e6;
+
+}
+
+.time-block-cell {
+  box-sizing: border-box;
+}

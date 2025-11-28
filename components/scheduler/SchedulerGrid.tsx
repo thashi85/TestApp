@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { ViewType, TimeInterval, Facility, Booking, RowHeights } from "@/lib/scheduler/types";
-import { getDateRange, formatTime, flattenFacilities } from "@/lib/scheduler/utils";
+import { getDateRange, formatTime, flattenFacilities, getCellMinWidth } from "@/lib/scheduler/utils";
 
 interface SchedulerGridProps {
   view: ViewType;
@@ -15,6 +15,7 @@ interface SchedulerGridProps {
   onCellClick?: (facilityId: string, date: Date, hour: number, minute: number) => void;
   onToggle: (facilityId: string) => void;
 }
+
 export const SchedulerGrid: React.FC<SchedulerGridProps> = ({
   view,
   timeInterval,
@@ -31,44 +32,37 @@ export const SchedulerGrid: React.FC<SchedulerGridProps> = ({
   const flatFacilities = flattenFacilities(facilities);
   const subCellsPerHour = view === "day" ? 60 / timeInterval : 1;
 
+  // Track screen width for responsive cell sizing
+  const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   console.log("Flat Facilities in SchedulerGrid:", flatFacilities);
-  const renderTimeHeaders = () => {
-    return (
-      <div className="flex flex-1">
-        <div style={{ width: "150px" }}></div>
+
+  /*   const renderTimeHeaders = () => {
+      return (
         <div className="flex flex-1">
-          {dates.map((date, dayIndex) => (
-            <div key={dayIndex} className="day-column">
-              <div className="day-header">
-                <div className="day-name">{date.toLocaleDateString("en-US", { weekday: "short" })}</div>
-                <div className="day-date">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+          <div style={{ width: "150px" }}></div>
+          <div className="flex flex-1">
+            {dates.map((date, dayIndex) => (
+              <div key={dayIndex} className="day-column">
+                <div className="day-header">
+                  <div className="day-name">{date.toLocaleDateString("en-US", { weekday: "short" })}</div>
+                  <div className="day-date">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+                </div>
               </div>
-              {/*  <div className="hours-container">
-          {Array.from({ length: 24 }, (_, hour) => (
-            <div key={hour} className="hour-column">
-              {view === "day" ? <div className="hour-header">{formatTime(hour)}</div> : null}
-              <div className="subcells-container">
-                {Array.from({ length: subCellsPerHour }, (_, subIndex) => {
-                  const minute = view === "day" ? subIndex * timeInterval : 0;
-                  return (
-                    <div
-                      key={`${hour}-${subIndex}`}
-                      className={`time-subcell ${subIndex > 0 ? "dashed-border" : ""}`}
-                      data-hour={hour}
-                      data-minute={minute}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div> */}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    );
-  };
+      );
+    }; */
 
   const FacilityItemRow: React.FC<{
     facility: Facility;
@@ -101,36 +95,119 @@ export const SchedulerGrid: React.FC<SchedulerGridProps> = ({
     );
   };
 
-  const renderFacilityRows = () => {
-    return flatFacilities.map((facility) => {
-      //  const rowHeight = rowHeights[facility.id] || 48; // Default height if not measured yet
+  const renderDayTimeRows = () => {
+    const totalHours = 24;
+    const cellMinWidth = getCellMinWidth(view, screenWidth);
+    const isDayView = view === "day";
 
+    return (
+      <>
+        {/* Days Row */}
+        <div className="header-days-row">
+          <div className="flex flex-1">
+            <div style={{ width: "150px", minWidth: "150px", flexShrink: 0, textWrap: "auto", borderRight: "1px solid #dee2e6", padding: "0.5rem" }}>
+              Venue / Spaces
+            </div>
+            <div className={`flex ${!isDayView ? 'overflow-x-auto' : 'flex-1'}`} style={{ flexShrink: isDayView ? 1 : 0 }}>
+              {dates.map((date, dayIndex) => (
+                <div
+                  key={`day-${dayIndex}`}
+                  className={`flex-1`}
+                  style={{
+                    minWidth: isDayView ? undefined : `calc(${cellMinWidth} * ${totalHours * subCellsPerHour})`,
+                    flex: isDayView ? '1 1 auto' : `0 0 calc(${cellMinWidth} * ${totalHours * subCellsPerHour} + ${totalHours * subCellsPerHour * 1}px)`
+                  }}
+                >
+                  <div className="day-header text-center p-2 border-r border-gray-300">
+                    <div className="day-name">{date.toLocaleDateString("en-US", { weekday: "short" })}</div>
+                    <div className="day-date">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Time Row */}
+        <div className="header-time-row">
+          <div className="flex flex-1">
+            <div style={{ width: "150px", minWidth: "150px", flexShrink: 0, borderRight: "1px solid #dee2e6" }}></div>
+            <div className={`flex ${!isDayView ? 'overflow-x-auto' : 'flex-1'}`}
+              style={{ flexShrink: isDayView ? 1 : 0 }}>
+              {dates.map((date, dayIndex) => (
+                <div
+                  key={`time-${dayIndex}`}
+                  className={`flex ${isDayView ? 'flex-1' : ''} `}
+                  style={{
+                    minWidth: isDayView ? undefined : `calc(${cellMinWidth} * ${totalHours * subCellsPerHour})`,
+                    flex: isDayView ? '1 1 auto' : `0 0 calc(${cellMinWidth} * ${totalHours * subCellsPerHour}  + ${totalHours * subCellsPerHour * 1}px)`
+                  }}
+                >
+                  {Array.from({ length: totalHours }, (_, hour) => {
+                    // Only show the label if it's day view OR every 3 hours in other views
+                    const shouldShowLabel = view === "day" || hour % 3 === 0;
+                    return (
+
+                      <div
+                        key={hour}
+                        className={`flex flex-row hours-cell text-sm justify-center items-center p-1`}
+                        style={{ minWidth: `calc(${cellMinWidth} * ${subCellsPerHour})`, flex: '1 1 auto' }}
+                      >
+                        {shouldShowLabel && `${String(hour).padStart(2, '0')}:00`}
+
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  const renderFacilityRows = () => {
+    const totalHours = 24;
+    const cellMinWidth = getCellMinWidth(view, screenWidth);
+    const isDayView = view === "day";
+
+    return flatFacilities.map((facility) => {
       return (
         <div
           key={facility.id}
-          className="facility-row"
+          className="facility-data-row"
           data-facility-id={facility.id}
-        /* style={{
-          height: `${rowHeight}px`,
-          minHeight: `${rowHeight}px`,
-          maxHeight: `${rowHeight}px`,
-        }} */
         >
           <div className="flex flex-1">
-            <div style={{ width: "150px", textWrap: "auto", borderRight: "1px solid #dee2e6" }}>
+            <div style={{ width: "150px", minWidth: "150px", flexShrink: 0, textWrap: "auto", borderRight: "1px solid #dee2e6" }}>
               <FacilityItemRow key={facility.id} facility={facility} onToggle={onToggle} />
             </div>
-            <div className="flex flex-1">
+            <div className={`flex ${!isDayView ? 'overflow-x-auto' : 'flex-1'}`}
+              style={{ flexShrink: isDayView ? 1 : 0 }}>
               {dates.map((date, dayIndex) => (
-                <div key={dayIndex} className={`day-cells facility-${facility.type}`}>
+                <div
+                  key={dayIndex}
+                  className={`flex facility-${facility.type} ${isDayView ? 'flex-1' : ''} day-cell ${dayIndex > 0 ? "solid-border-left" : ""}`}
+                  style={{
+
+                    minWidth: isDayView ? undefined : `calc(${cellMinWidth} * ${totalHours * subCellsPerHour})`,
+                    flex: isDayView ? '1 1 auto' : `0 0 calc(${cellMinWidth} * ${totalHours * subCellsPerHour}  + ${totalHours * subCellsPerHour * 1}px)`
+                  }}
+                >
                   {Array.from({ length: 24 }, (_, hour) => (
-                    <div key={hour} className="hour-cells">
+                    <div
+                      key={hour}
+                      className={`flex flex-row hours-cell solid-border-left`}
+                      style={{ minWidth: `calc(${cellMinWidth} * ${subCellsPerHour})`, flex: '1 1 auto' }}
+                    >
                       {Array.from({ length: subCellsPerHour }, (_, subIndex) => {
                         const minute = view === "day" ? subIndex * timeInterval : 0;
                         return (
                           <div
                             key={`${hour}-${subIndex}`}
-                            className={`booking-cell ${subIndex > 0 ? "dashed-border" : ""}`}
+                            className={`time-block-cell ${subIndex > 0 ? "dashed-border-left" : ""}`}
+                            style={{ minWidth: cellMinWidth, flex: '1 1 auto' }}
                             onClick={() => onCellClick?.(facility.id, date, hour, minute)}
                           />
                         );
@@ -148,9 +225,10 @@ export const SchedulerGrid: React.FC<SchedulerGridProps> = ({
 
   return (
     <div className={`scheduler-grid view-${view}`}>
-      <div className="time-headers">{renderTimeHeaders()}</div>
+      {/*  <div className="time-headers">{renderTimeHeaders()}</div> */}
       <div className="facility-rows" ref={scrollRef}>
-        <div>{renderFacilityRows()}</div>
+        {renderDayTimeRows()}
+        {renderFacilityRows()}
       </div>
     </div>
   );

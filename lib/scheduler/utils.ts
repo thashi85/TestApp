@@ -110,9 +110,46 @@ export const formatTime = (hour: number, minute: number = 0): string => {
 };
 
 export const getScreenSize = (width: number): string => {
-    if (width < 576) return 'xs';
-    if (width < 768) return 'sm';
-    if (width < 992) return 'md';
-    if (width < 1200) return 'lg';
-    return 'xl';
+    if (width < 375) return 'xs';      // Extra small (< 375px)
+    if (width < 576) return 'sm';      // Small (375px - 576px)
+    if (width < 798) return 'md';      // Medium (576px - 798px)
+    if (width < 992) return 'lg';      // Large (798px - 992px)
+    if (width < 1200) return 'xl';     // Extra large (992px - 1200px)
+    if (width < 1600) return 'xxl';    // 2XL (1200px - 1600px)
+    return '3xl';                       // 3XL (> 1600px)
+};
+
+/**
+ * Get the optimal cell min-width based on screen size and view type
+ * @param view - The current view type (day, week, month)
+ * @param screenWidth - The current screen width in pixels
+ * @returns The min-width value as a string (e.g., "20px") or undefined for day view
+ */
+export const getCellMinWidth = (view: ViewType, screenWidth: number): string | undefined => {
+    // Day view uses flexible width
+    if (view === 'day') {
+        return undefined;
+    }
+
+    // Week/Month views use responsive min-width based on screen size
+    const screenSize = getScreenSize(screenWidth);
+
+    switch (screenSize) {
+        case 'xs':
+            return '6px';   // Extra small devices (< 375px)
+        case 'sm':
+            return '8px';   // Small devices (375px - 576px)
+        case 'md':
+            return '12px';  // Medium devices (576px - 798px)
+        case 'lg':
+            return '18px';  // Large devices (798px - 992px)
+        case 'xl':
+            return '22px';  // Extra large devices (992px - 1200px)
+        case 'xxl':
+            return '26px';  // 2XL devices (1200px - 1600px)
+        case '3xl':
+            return '30px';  // 3XL devices (> 1600px)
+        default:
+            return '20px';  // Fallback
+    }
 };
